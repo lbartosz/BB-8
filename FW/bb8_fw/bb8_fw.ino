@@ -199,7 +199,3 @@ void test_actuators(void) {
 	analogWrite(PIN_M1_SPEED, 0);
 	delay(WAIT);
 }
-
-void move_motor_2(void)
-{
-}
