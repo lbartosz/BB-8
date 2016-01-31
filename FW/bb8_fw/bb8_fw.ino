@@ -5,6 +5,7 @@
 */
 
 #include <servo.h>
+#include <SoftwareSerial.h>
 
 //==================================
 // enable/disable test mode here
@@ -44,7 +45,8 @@ int m1_mode = 0;
 int m2_speed = 0;
 int m2_mode = 0;
 
-
+SoftwareSerial bt_serial(0, 1);
+char c = 'x';
 
 
 //==================================
@@ -67,21 +69,33 @@ void setup() {
 	pinMode(PIN_M2_RIGHT, OUTPUT);
 
 	pinMode(PIN_PIEZO, OUTPUT);
+
+	Serial.begin(9600);
+	bt_serial.begin(9600);
+
 }
 
 //==================================
 // MAIN LOOP
 void loop() {
-	
+	// --------------------------------------
 	// test code to check actuators
 	while(TEST_ENABLED) {
-		test_actuators();
+		//test_actuators();
 	}
 	
 	// real control code
+	if (bt_serial.available()) {
+		c = bt_serial.read();
+		Serial.write(c);
+	}
+	//Serial.write('x');
+	delay(100);
+	//Serial.write(c);
 
 	// get cmd via bt
-	int ctrls_received = receive_control_via_bt();
+	//int ctrls_received = receive_control_via_bt();
+
 
 	// some ifs here to read what to do from ctrl commands
 
