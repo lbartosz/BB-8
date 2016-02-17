@@ -29,9 +29,18 @@
 
 #define PIN_PIEZO 11		// D12 PB3 MOSI
 
-#define WAIT 1000
+#define WAIT 50
 #define MIN_MOTOR_SPEED 150
 #define MAX_MOTOR_SPEED 255
+#define ACCELERATION 25
+
+#define LEFT 'L'
+#define RIGHT 'R'
+#define FORWARD 'F'
+#define BACKWARD 'B'
+#define STOP 'S'
+#define SOUND 'P'
+#define NOOP 'N'
 
 
 // globals
@@ -41,20 +50,18 @@ Servo servo_head_y;
 int translation = 0;
 int rotation = 0;
 int m1_speed = 0;
-int m1_mode = 0;
 int m2_speed = 0;
-int m2_mode = 0;
 
 SoftwareSerial bt_serial(0, 1);
-char c = 'x';
-
+char ctrls_received = NOOP;
 
 //==================================
 // functions declarations
 void test_actuators(void);
 void move_motor_1(bool, int);
 void move_motor_2(bool, int);
-void full_stop(bool, bool);
+void full_stop(bool = true, bool = true);
+void make_sound(void);
 
 //==================================
 // SYSTEM SETUP
@@ -81,37 +88,49 @@ void loop() {
 	// --------------------------------------
 	// test code to check actuators
 	while(TEST_ENABLED) {
-		//test_actuators();
+		test_actuators();
 	}
 	
-	// real control code
+	// receive ctrl via bt
+	ctrls_received = NOOP;
 	if (bt_serial.available()) {
-		c = bt_serial.read();
-		Serial.write(c);
+		ctrls_received = bt_serial.read();
 	}
-	//Serial.write('x');
-	delay(100);
-	//Serial.write(c);
 
-	// get cmd via bt
-	//int ctrls_received = receive_control_via_bt();
-
+	if (ctrls_received != NOOP)
+		Serial.write(ctrls_received);
 
 	// some ifs here to read what to do from ctrl commands
+	switch (ctrls_received)	{
+	case SOUND:
+		make_sound();
+		break;
+	case FORWARD:
+		break;
+	case BACKWARD:
+		break;
+	case LEFT:
+		break;
+	case RIGHT:
+		break;
+	case STOP:
+		full_stop();
+		break;
+	case NOOP:
+		break;
+	default:
+		break;
+	}
 
-	// call move functions
+
+	// update actuators
 	
 	
-
+	delay(WAIT);
 }
 
 //==================================
 // function definitions
-
-int receive_control_via_bt(void) {
-	// get and return bt control transmission here
-	return 0;
-}
 
 void move_motor_1(bool forward = true, int target_speed = MAX_MOTOR_SPEED) {
 	// accelerate and start rolling forward
@@ -156,7 +175,7 @@ void move_motor_2(bool forward = true, int target_speed = MAX_MOTOR_SPEED) {
 }
 
 
-void full_stop(bool stop_m1 = true, bool stop_m2 = true) {
+void full_stop(bool stop_m1, bool stop_m2) {
 	if (stop_m1) {
 		digitalWrite(PIN_M1_LEFT, LOW);
 		digitalWrite(PIN_M1_RIGHT, LOW);
@@ -171,6 +190,16 @@ void full_stop(bool stop_m1 = true, bool stop_m2 = true) {
 	}
 	// wait for bb8 to stop swaying
 	delay(200);
+}
+
+void make_sound(void) {
+	for (int i = 200; i >= 0; i--) {
+		digitalWrite(PIN_PIEZO, LOW);
+		delayMicroseconds(1000);
+		digitalWrite(PIN_PIEZO, HIGH);
+		delayMicroseconds(1000);
+	}
+	digitalWrite(PIN_PIEZO, LOW);
 }
 
 void test_actuators(void) {
