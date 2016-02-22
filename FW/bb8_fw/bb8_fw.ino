@@ -29,10 +29,11 @@
 
 #define PIN_PIEZO 11		// D12 PB3 MOSI
 
-#define WAIT 50
-#define MIN_MOTOR_SPEED 150
+#define WAIT 250
+#define MIN_MOTOR_SPEED 155
 #define MAX_MOTOR_SPEED 255
-#define ACCELERATION 25
+#define ACCELERATION 1		//this will be added to translation once accelerating
+#define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -96,6 +97,9 @@ void loop() {
 	if (bt_serial.available()) {
 		ctrls_received = bt_serial.read();
 	}
+	else
+		ctrls_received = NOOP;
+
 
 	if (ctrls_received != NOOP)
 		Serial.write(ctrls_received);
@@ -106,26 +110,43 @@ void loop() {
 		make_sound();
 		break;
 	case FORWARD:
+		if (0 < abs(translation) < MAX_TRANSLATION)
+			translation += ACCELERATION;
+		else if (translation < 0)
+			full_stop();
 		break;
 	case BACKWARD:
+		if (0 < abs(translation) < MAX_TRANSLATION)
+			translation -= ACCELERATION;
+		else if (translation > 0)
+			full_stop();
 		break;
 	case LEFT:
 		break;
 	case RIGHT:
 		break;
 	case STOP:
+		translation = 0;
 		full_stop();
 		break;
 	case NOOP:
+		if (translation > 0)
+			translation -= ACCELERATION;
+		else if (translation < 0)
+			translation += ACCELERATION;
 		break;
 	default:
+		if (translation > 0)
+			translation -= ACCELERATION;
+		else if (translation < 0)
+			translation += ACCELERATION;
 		break;
 	}
 
 
 	// update actuators
-	
-	
+	Serial.print(translation);
+	Serial.print("\n");
 	delay(WAIT);
 }
 
