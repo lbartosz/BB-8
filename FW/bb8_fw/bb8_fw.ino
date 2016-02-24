@@ -29,10 +29,10 @@
 
 #define PIN_PIEZO 11		// D12 PB3 MOSI
 
-#define WAIT 250
+#define WAIT 100
 #define MIN_MOTOR_SPEED 155
 #define MAX_MOTOR_SPEED 255
-#define ACCELERATION 1		//this will be added to translation once accelerating
+#define ACCELERATION 10		//this will be added to translation once accelerating
 #define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 
 #define LEFT 'L'
@@ -59,8 +59,8 @@ char ctrls_received = NOOP;
 //==================================
 // functions declarations
 void test_actuators(void);
-void move_motor_1(bool, int);
-void move_motor_2(bool, int);
+int set_m1_speed(int = MAX_MOTOR_SPEED);
+int set_m2_speed(int = MAX_MOTOR_SPEED);
 void full_stop(bool = true, bool = true);
 void make_sound(void);
 
@@ -94,9 +94,8 @@ void loop() {
 	
 	// receive ctrl via bt
 	ctrls_received = NOOP;
-	if (bt_serial.available()) {
+	if (bt_serial.available())
 		ctrls_received = bt_serial.read();
-	}
 	else
 		ctrls_received = NOOP;
 
@@ -110,13 +109,13 @@ void loop() {
 		make_sound();
 		break;
 	case FORWARD:
-		if (0 < abs(translation) < MAX_TRANSLATION)
+		if (translation >= 0 && translation < MAX_TRANSLATION)
 			translation += ACCELERATION;
 		else if (translation < 0)
 			full_stop();
 		break;
 	case BACKWARD:
-		if (0 < abs(translation) < MAX_TRANSLATION)
+		if (translation <= 0 && abs(translation) < MAX_TRANSLATION)
 			translation -= ACCELERATION;
 		else if (translation > 0)
 			full_stop();
@@ -136,63 +135,109 @@ void loop() {
 			translation += ACCELERATION;
 		break;
 	default:
-		if (translation > 0)
-			translation -= ACCELERATION;
-		else if (translation < 0)
-			translation += ACCELERATION;
 		break;
 	}
 
 
 	// update actuators
+	int target_speed = 0;
+	if (translation > 0)
+		target_speed = MIN_MOTOR_SPEED + translation;
+	else if (translation < 0)
+		target_speed = translation - MIN_MOTOR_SPEED;
+	
+
 	Serial.print(translation);
 	Serial.print("\n");
+
 	delay(WAIT);
 }
 
 //==================================
 // function definitions
 
-void move_motor_1(bool forward = true, int target_speed = MAX_MOTOR_SPEED) {
+int set_m1_speed(int target_speed) {
 	// accelerate and start rolling forward
 	// return current engine speed delta
 
-	if (forward) {
-		digitalWrite(PIN_M1_LEFT, HIGH);
-		digitalWrite(PIN_M1_RIGHT, LOW);
+	if (target_speed > 0) {
+		if (m1_speed >= 0) {
+			digitalWrite(PIN_M1_LEFT, HIGH);
+			digitalWrite(PIN_M1_RIGHT, LOW);
+		}
+		else {
+			digitalWrite(PIN_M1_LEFT, LOW);
+			digitalWrite(PIN_M1_RIGHT, LOW);
+			analogWrite(PIN_M1_SPEED, 0);
+			return(0);
+		}
+	}
+	else if (target_speed < 0) {
+		if (m1_speed <= 0) {
+			digitalWrite(PIN_M1_LEFT, LOW);
+			digitalWrite(PIN_M1_RIGHT, HIGH);
+		}
+		else {
+			digitalWrite(PIN_M1_LEFT, LOW);
+			digitalWrite(PIN_M1_RIGHT, LOW);
+			analogWrite(PIN_M1_SPEED, 0);
+			return(0);
+		}
 	}
 	else {
 		digitalWrite(PIN_M1_LEFT, LOW);
-		digitalWrite(PIN_M1_RIGHT, HIGH);
+		digitalWrite(PIN_M1_RIGHT, LOW);
+		analogWrite(PIN_M1_SPEED, 255);
+		return(0);
 	}
-	
 
 	for (int speed = max(m1_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
 		analogWrite(PIN_M1_SPEED, speed);
-		delay(10);
+		delay(5);
 	}
-	m1_speed = target_speed;
+	return (target_speed - m2_speed);
 }
 
-void move_motor_2(bool forward = true, int target_speed = MAX_MOTOR_SPEED) {
+int set_m2_speed(int target_speed) {
 	// accelerate and start rolling forward
 	// return current engine speed delta
 
-	if (forward) {
-		digitalWrite(PIN_M2_LEFT, HIGH);
-		digitalWrite(PIN_M2_RIGHT, LOW);
+	if (target_speed > 0) {
+		if (m2_speed >= 0) {
+			digitalWrite(PIN_M2_LEFT, HIGH);
+			digitalWrite(PIN_M2_RIGHT, LOW);
+		}
+		else {
+			digitalWrite(PIN_M2_LEFT, LOW);
+			digitalWrite(PIN_M2_RIGHT, LOW);
+			analogWrite(PIN_M2_SPEED, 0);
+			return(0);
+		}
+	}
+	else if (target_speed < 0) {
+		if (m2_speed <= 0) {
+			digitalWrite(PIN_M2_LEFT, LOW);
+			digitalWrite(PIN_M2_RIGHT, HIGH);
+		}
+		else {
+			digitalWrite(PIN_M2_LEFT, LOW);
+			digitalWrite(PIN_M2_RIGHT, LOW);
+			analogWrite(PIN_M2_SPEED, 0);
+			return(0);
+		}
 	}
 	else {
 		digitalWrite(PIN_M2_LEFT, LOW);
-		digitalWrite(PIN_M2_RIGHT, HIGH);
+		digitalWrite(PIN_M2_RIGHT, LOW);
+		analogWrite(PIN_M2_SPEED, 255);
+		return(0);
 	}
-
 
 	for (int speed = max(m2_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
 		analogWrite(PIN_M2_SPEED, speed);
-		delay(10);
+		delay(5);
 	}
-	m2_speed = target_speed;
+	return (target_speed - m2_speed);
 }
 
 
