@@ -59,6 +59,7 @@ char ctrls_received = NOOP;
 //==================================
 // functions declarations
 void test_actuators(void);
+void update_actuators(int, int);
 int set_m1_speed(int = MAX_MOTOR_SPEED);
 int set_m2_speed(int = MAX_MOTOR_SPEED);
 void full_stop(bool = true, bool = true);
@@ -140,14 +141,10 @@ void loop() {
 
 
 	// update actuators
-	int target_speed = 0;
-	if (translation > 0)
-		target_speed = MIN_MOTOR_SPEED + translation;
-	else if (translation < 0)
-		target_speed = translation - MIN_MOTOR_SPEED;
+	update_actuators(translation, rotation);
 	
 
-	Serial.print(translation);
+	Serial.print(m1_speed);
 	Serial.print("\n");
 
 	delay(WAIT);
@@ -155,6 +152,23 @@ void loop() {
 
 //==================================
 // function definitions
+
+void update_actuators(int translation, int rotation) {
+	int m1_target_speed = 0;
+	int m2_target_speed = 0;
+
+	if (translation > 0) {
+		m1_target_speed = MIN_MOTOR_SPEED + translation;
+		m1_target_speed = MIN_MOTOR_SPEED + translation;
+	}
+	else if (translation < 0) {
+		m1_target_speed = translation - MIN_MOTOR_SPEED;
+		m2_target_speed = translation - MIN_MOTOR_SPEED;
+	}
+
+	m1_speed = set_m1_speed(m1_target_speed);
+	m2_speed = (m2_target_speed);
+}
 
 int set_m1_speed(int target_speed) {
 	// accelerate and start rolling forward
@@ -195,7 +209,7 @@ int set_m1_speed(int target_speed) {
 		analogWrite(PIN_M1_SPEED, speed);
 		delay(5);
 	}
-	return (target_speed - m2_speed);
+	return (target_speed);
 }
 
 int set_m2_speed(int target_speed) {
@@ -237,7 +251,7 @@ int set_m2_speed(int target_speed) {
 		analogWrite(PIN_M2_SPEED, speed);
 		delay(5);
 	}
-	return (target_speed - m2_speed);
+	return (target_speed);
 }
 
 
