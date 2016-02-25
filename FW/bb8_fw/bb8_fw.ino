@@ -32,8 +32,10 @@
 #define WAIT 100
 #define MIN_MOTOR_SPEED 155
 #define MAX_MOTOR_SPEED 255
-#define ACCELERATION 10		//this will be added to translation once accelerating
+#define ACC_STEP 10		//this will be added to translation once accelerating
 #define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
+#define MAX_ROTATION 50		//this is max value that can be added/substracted from translation when turning
+#define ROT_STEP 5
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -111,19 +113,27 @@ void loop() {
 		break;
 	case FORWARD:
 		if (translation >= 0 && translation < MAX_TRANSLATION)
-			translation += ACCELERATION;
+			translation += ACC_STEP;
 		else if (translation < 0)
 			full_stop();
 		break;
 	case BACKWARD:
 		if (translation <= 0 && abs(translation) < MAX_TRANSLATION)
-			translation -= ACCELERATION;
+			translation -= ACC_STEP;
 		else if (translation > 0)
 			full_stop();
 		break;
 	case LEFT:
+		if (rotation <= 0 && abs(rotation) < MAX_ROTATION)
+			rotation -= ROT_STEP;
+		else if (rotation > 0)
+			rotation = 0;
 		break;
 	case RIGHT:
+		if (rotation >= 0 && rotation < MAX_ROTATION)
+			rotation += ROT_STEP;
+		else if (rotation < 0)
+			rotation = 0;
 		break;
 	case STOP:
 		translation = 0;
@@ -131,9 +141,13 @@ void loop() {
 		break;
 	case NOOP:
 		if (translation > 0)
-			translation -= ACCELERATION;
+			translation -= ACC_STEP;
 		else if (translation < 0)
-			translation += ACCELERATION;
+			translation += ACC_STEP;
+		if (rotation > 0)
+			rotation -= ROT_STEP;
+		else if (rotation < 0)
+			rotation += ROT_STEP;
 		break;
 	default:
 		break;
@@ -144,7 +158,7 @@ void loop() {
 	update_actuators(translation, rotation);
 	
 
-	Serial.print(m1_speed);
+	Serial.print(rotation);
 	Serial.print("\n");
 
 	delay(WAIT);
