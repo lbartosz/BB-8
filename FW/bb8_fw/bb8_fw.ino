@@ -32,7 +32,7 @@
 #define WAIT 100
 #define MIN_MOTOR_SPEED 155
 #define MAX_MOTOR_SPEED 255
-#define ACC_STEP 10		//this will be added to translation once accelerating
+#define ACC_STEP 5		//this will be added to translation once accelerating
 #define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 #define MAX_ROTATION 50		//this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 5
@@ -157,9 +157,13 @@ void loop() {
 	// update actuators
 	update_actuators(translation, rotation);
 	
-
-	Serial.print(rotation);
+	/*
+	Serial.print(" |Trans: "); Serial.print(translation);
+	Serial.print(" |Rot: "); Serial.print(rotation);
+	Serial.print(" |M1: "); Serial.print(m1_speed);
+	Serial.print(" |M2: "); Serial.print(m2_speed);
 	Serial.print("\n");
+	*/
 
 	delay(WAIT);
 }
@@ -173,15 +177,18 @@ void update_actuators(int translation, int rotation) {
 
 	if (translation > 0) {
 		m1_target_speed = MIN_MOTOR_SPEED + translation;
-		m1_target_speed = MIN_MOTOR_SPEED + translation;
+		m2_target_speed = MIN_MOTOR_SPEED + translation;
 	}
 	else if (translation < 0) {
 		m1_target_speed = translation - MIN_MOTOR_SPEED;
 		m2_target_speed = translation - MIN_MOTOR_SPEED;
 	}
 
+	m1_target_speed += rotation;
+	m2_target_speed -= rotation;
+
 	m1_speed = set_m1_speed(m1_target_speed);
-	m2_speed = (m2_target_speed);
+	m2_speed = set_m2_speed(m2_target_speed);
 }
 
 int set_m1_speed(int target_speed) {
