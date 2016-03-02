@@ -19,11 +19,11 @@
 #define PIN_HEAD_SERVO_X 9	// D9 PB1 OC1A
 #define PIN_HEAD_SERVO_Y 10	// D10 PB2 OC1B
 
-#define PIN_M1_SPEED 3		// D5 PD5
+#define PIN_M1_SPEED 3		// D3 PD3
 #define PIN_M1_LEFT 7		// D7 PD7
 #define PIN_M1_RIGHT 8		// D8 PB0 
 
-#define PIN_M2_SPEED  12	// D6 PD6
+#define PIN_M2_SPEED 6	// D6 PD6
 #define PIN_M2_LEFT 14		// PC0 ADC0
 #define PIN_M2_RIGHT 15		// PC1 ADC1
 
@@ -306,6 +306,7 @@ void make_sound(void) {
 void test_actuators(void) {
 
 //piezo test
+	/*
 	for (int i = 500; i >= 0; i--) {
 		digitalWrite(PIN_PIEZO, LOW);
 		delayMicroseconds(1000);
@@ -327,7 +328,7 @@ void test_actuators(void) {
 	servo_head_y.write(180);
 	delay(WAIT);
 	
-
+	*/
 	//motor test
 	digitalWrite(PIN_M1_LEFT, HIGH);
 	digitalWrite(PIN_M1_RIGHT, LOW);
@@ -335,11 +336,17 @@ void test_actuators(void) {
 		analogWrite(PIN_M1_SPEED, speed);
 		delay(10);
 	}
-	delay(3000);
-	for (int speed = 255; speed <= 150; speed--) {
-		analogWrite(PIN_M1_SPEED, speed);
+	digitalWrite(PIN_M2_LEFT, HIGH);
+	digitalWrite(PIN_M2_RIGHT, LOW);
+	for (int speed2 = 150; speed2 <= 255; speed2++) {
+		analogWrite(PIN_M2_SPEED, speed2);
 		delay(10);
 	}
-	analogWrite(PIN_M1_SPEED, 0);
+	//delay(3000);
+	//for (int speed = 255; speed <= 150; speed--) {
+	//	analogWrite(PIN_M1_SPEED, speed);
+	//	delay(10);
+	//}
+	//analogWrite(PIN_M1_SPEED, 0);
 	delay(WAIT);
 }
