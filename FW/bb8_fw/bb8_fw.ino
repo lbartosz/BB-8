@@ -32,10 +32,12 @@
 #define WAIT 100
 #define MIN_MOTOR_SPEED 155
 #define MAX_MOTOR_SPEED 255
-#define ACC_STEP 5		//this will be added to translation once accelerating
+#define ACC_STEP 5		//this will be added to translation once accelerating/slowing down
 #define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 #define MAX_ROTATION 50		//this is max value that can be added/substracted from translation when turning
-#define ROT_STEP 5
+#define ROT_STEP 5		// this will be added to rotation once turn control is pressed
+#define MAX_SPEEDUP_TICKS 2000  // this is reset value to ticks
+#define MAX_SLOWDOWN_TICKS 2000 // this is reset value to ticks
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -50,12 +52,15 @@
 Servo servo_head_x;
 Servo servo_head_y;
 
+SoftwareSerial bt_serial(0, 1);
+
 int translation = 0;
 int rotation = 0;
 int m1_speed = 0;
 int m2_speed = 0;
+unsigned int speedup_ticks = MAX_SPEEDUP_TICKS;
+unsigned int slowdown_ticks = MAX_SLOWDOWN_TICKS;
 
-SoftwareSerial bt_serial(0, 1);
 char ctrls_received = NOOP;
 
 //==================================
@@ -112,10 +117,18 @@ void loop() {
 		make_sound();
 		break;
 	case FORWARD:
-		if (translation >= 0 && translation < MAX_TRANSLATION)
-			translation += ACC_STEP;
-		else if (translation < 0)
+		if (translation < 0)
 			full_stop();
+		else {
+			if (speedup_ticks = 0) {
+				speedup_ticks = MAX_SPEEDUP_TICKS;
+				if (translation < MAX_TRANSLATION)
+					translation += ACC_STEP;
+			}
+			else {
+				speedup_ticks -= 1;
+			}
+		}
 		break;
 	case BACKWARD:
 		if (translation <= 0 && abs(translation) < MAX_TRANSLATION)
