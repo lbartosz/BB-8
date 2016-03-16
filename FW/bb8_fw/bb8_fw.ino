@@ -29,15 +29,16 @@
 
 #define PIN_PIEZO 11    // D12 PB3 MOSI
 
-#define WAIT 100
-#define MIN_MOTOR_SPEED 155
-#define MAX_MOTOR_SPEED 255
-#define ACC_STEP 1    //this will be added to translation once accelerating/slowing down
-#define MAX_TRANSLATION 100 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
-#define MAX_ROTATION 50    //this is max value that can be added/substracted from translation when turning
+#define WAIT 10
+#define MIN_MOTOR_SPEED 100
+#define MAX_MOTOR_SPEED 150
+#define ACC_STEP 1    //this will be added to translation once accelerating
+#define SLOW_STEP 10  //this will be added to translation once slowing down
+#define MAX_TRANSLATION 50 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
+#define MAX_ROTATION 20    //this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 1    // this will be added to rotation once turn control is pressed
-#define MAX_SPEEDUP_TICKS 2000  // this is reset value to ticks
-#define MAX_SLOWDOWN_TICKS 2000 // this is reset value to ticks
+#define MAX_SPEEDUP_TICKS 3  // this is reset value to ticks
+#define MAX_SLOWDOWN_TICKS 10 // this is reset value to ticks
 
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -108,8 +109,8 @@ void loop() {
     ctrls_received = NOOP;
 
 
-  if (ctrls_received != NOOP)
-    Serial.write(ctrls_received);
+  // if (ctrls_received != NOOP)
+  //   Serial.write(ctrls_received);
 
   // some ifs here to read what to do from ctrl commands
   switch (ctrls_received)  {
@@ -123,8 +124,9 @@ void loop() {
     } else {
       if (speedup_ticks == 0) {
         speedup_ticks = MAX_SPEEDUP_TICKS;
-        if (translation < MAX_TRANSLATION)
+        if (translation < MAX_TRANSLATION) {
           translation += ACC_STEP;
+        }
       } else {
         speedup_ticks -= 1;
       }
@@ -165,9 +167,9 @@ void loop() {
     if (slowdown_ticks == 0) {
       slowdown_ticks = MAX_SLOWDOWN_TICKS;
       if (translation > 0) {
-        translation -= ACC_STEP;
+        translation -= SLOW_STEP;
       } else if (translation < 0) {
-        translation += ACC_STEP;
+        translation += SLOW_STEP;
       }
     } else {
       slowdown_ticks -= 1;
@@ -185,14 +187,15 @@ void loop() {
   // update actuators
   update_actuators(translation, rotation);
   
-  /*
+  
   Serial.print(" |Trans: "); Serial.print(translation);
   Serial.print(" |Rot: "); Serial.print(rotation);
   Serial.print(" |M1: "); Serial.print(m1_speed);
   Serial.print(" |M2: "); Serial.print(m2_speed);
+  Serial.print(" |Speedup_ticks: "); Serial.print(speedup_ticks);
+  Serial.print(" |Slowdown_ticks: "); Serial.print(slowdown_ticks);
   Serial.print("\n");
-  */
-
+  
   delay(WAIT);
 }
 
@@ -256,7 +259,7 @@ int set_m1_speed(int target_speed) {
 
   for (int speed = max(m1_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
     analogWrite(PIN_M1_SPEED, speed);
-    delay(5);
+    //delay(1);
   }
   return (target_speed);
 }
@@ -298,7 +301,7 @@ int set_m2_speed(int target_speed) {
 
   for (int speed = max(m2_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
     analogWrite(PIN_M2_SPEED, speed);
-    delay(5);
+    //delay(1);
   }
   return (target_speed);
 }
