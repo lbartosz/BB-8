@@ -31,15 +31,15 @@
 
 #define WAIT 10
 #define MIN_MOTOR_SPEED 100
-#define MAX_MOTOR_SPEED 150
+#define MAX_MOTOR_SPEED 120
 #define ACC_STEP 1    //this will be added to translation once accelerating
 #define SLOW_STEP 10  //this will be added to translation once slowing down
 #define MAX_TRANSLATION 50 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
-#define MAX_ROTATION 20    //this is max value that can be added/substracted from translation when turning
+#define MAX_ROTATION 5    //this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 1    // this will be added to rotation once turn control is pressed
 #define MAX_SPEEDUP_TICKS 3  // this is reset value to ticks
 #define MAX_SLOWDOWN_TICKS 10 // this is reset value to ticks
-
+ 
 #define LEFT 'L'
 #define RIGHT 'R'
 #define FORWARD 'F'
@@ -103,11 +103,11 @@ void loop() {
   
   // receive ctrl via bt
   ctrls_received = NOOP;
-  if (bt_serial.available())
-    ctrls_received = bt_serial.read();
-  else
-    ctrls_received = NOOP;
-
+  // if (bt_serial.available())
+  //   ctrls_received = bt_serial.read();
+  // else
+  //   ctrls_received = NOOP;
+  ctrls_received = bt_serial.read();
 
   // if (ctrls_received != NOOP)
   //   Serial.write(ctrls_received);
@@ -120,6 +120,7 @@ void loop() {
   case FORWARD:
     if (translation < 0) {
       full_stop();
+      translation = 0;
       speedup_ticks = MAX_SPEEDUP_TICKS;
     } else {
       if (speedup_ticks == 0) {
@@ -135,6 +136,7 @@ void loop() {
   case BACKWARD:
     if (translation > 0) {
       full_stop();
+      translation = 0;
       speedup_ticks = MAX_SPEEDUP_TICKS;
     } else {
       if (speedup_ticks == 0) {
@@ -188,13 +190,13 @@ void loop() {
   update_actuators(translation, rotation);
   
   
-  Serial.print(" |Trans: "); Serial.print(translation);
-  Serial.print(" |Rot: "); Serial.print(rotation);
-  Serial.print(" |M1: "); Serial.print(m1_speed);
-  Serial.print(" |M2: "); Serial.print(m2_speed);
-  Serial.print(" |Speedup_ticks: "); Serial.print(speedup_ticks);
-  Serial.print(" |Slowdown_ticks: "); Serial.print(slowdown_ticks);
-  Serial.print("\n");
+  //Serial.print(" |Trans: "); Serial.print(translation);
+  //Serial.print(" |Rot: "); Serial.print(rotation);
+  //Serial.print(" |M1: "); Serial.print(m1_speed);
+  //Serial.print(" |M2: "); Serial.print(m2_speed);
+  //Serial.print(" |Speedup_ticks: "); Serial.print(speedup_ticks);
+  //Serial.print(" |Slowdown_ticks: "); Serial.print(slowdown_ticks);
+  //Serial.print("\n");
   
   delay(WAIT);
 }
