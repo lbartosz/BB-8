@@ -87,7 +87,7 @@ void setup() {
   
   pinMode(PIN_PIEZO, OUTPUT);
   
-  Serial.begin(9600);
+  //Serial.begin(9600);
   bt_serial.begin(9600);
 
 }
@@ -118,6 +118,7 @@ void loop() {
     make_sound();
     break;
   case FORWARD:
+    slowdown_ticks = MAX_SLOWDOWN_TICKS;
     if (translation < 0) {
       full_stop();
       translation = 0;
@@ -134,6 +135,7 @@ void loop() {
     }
     break;
   case BACKWARD:
+    slowdown_ticks = MAX_SLOWDOWN_TICKS;
     if (translation > 0) {
       full_stop();
       translation = 0;
@@ -150,19 +152,22 @@ void loop() {
     }
     break;
   case LEFT:
-    if (rotation <= 0 && abs(rotation) < MAX_ROTATION)
+    if (rotation <= 0 && abs(rotation) < MAX_ROTATION) {
       rotation -= ROT_STEP;
-    else if (rotation > 0)
+    } else if (rotation > 0) {
       rotation = 0;
+    }
     break;
   case RIGHT:
-    if (rotation >= 0 && rotation < MAX_ROTATION)
+    if (rotation >= 0 && rotation < MAX_ROTATION) {
       rotation += ROT_STEP;
-    else if (rotation < 0)
+    } else if (rotation < 0) {
       rotation = 0;
+    }
     break;
   case STOP:
     translation = 0;
+    rotation = 0;
     full_stop();
     break;
   case NOOP:
