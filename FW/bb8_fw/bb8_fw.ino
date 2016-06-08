@@ -100,14 +100,18 @@ void loop() {
   while(TEST_ENABLED) {
     test_actuators();
   }
-  
+
+  // this sounds like a good idea
+  // ALTERNATIVE, DO NOT LOOP THROUGH COMMAND PARSING IF CTRLS ARE NOT RECEIVED. JUST RESET ctrls_received value to NONO after some timeout
+
+
   // receive ctrl via bt
-  ctrls_received = NOOP;
-  // if (bt_serial.available())
-  //   ctrls_received = bt_serial.read();
-  // else
-  //   ctrls_received = NOOP;
-  ctrls_received = bt_serial.read();
+  //ctrls_received = NOOP;
+  if (bt_serial.available())
+    ctrls_received = bt_serial.read();
+  //else
+  //  ctrls_received = NOOP;
+  //ctrls_received = bt_serial.read();
 
   // if (ctrls_received != NOOP)
   //   Serial.write(ctrls_received);
@@ -118,19 +122,12 @@ void loop() {
     make_sound();
     break;
   case FORWARD:
-    slowdown_ticks = MAX_SLOWDOWN_TICKS;
     if (translation < 0) {
       full_stop();
       translation = 0;
-      speedup_ticks = MAX_SPEEDUP_TICKS;
     } else {
       if (speedup_ticks == 0) {
-        speedup_ticks = MAX_SPEEDUP_TICKS;
-        if (translation < MAX_TRANSLATION) {
-          translation += ACC_STEP;
-        }
-      } else {
-        speedup_ticks -= 1;
+        translation = MAX_TRANSLATION;
       }
     }
     break;
@@ -230,8 +227,8 @@ void update_actuators(int translation, int rotation) {
 }
 
 int set_m1_speed(int target_speed) {
-  // accelerate and start rolling forward
-  // return current engine speed delta
+  // set motor speed to given in argument
+  // return current engine speed
 
   if (target_speed > 0) {
     if (m1_speed >= 0) {
@@ -239,9 +236,7 @@ int set_m1_speed(int target_speed) {
       digitalWrite(PIN_M1_RIGHT, LOW);
     }
     else {
-      digitalWrite(PIN_M1_LEFT, LOW);
-      digitalWrite(PIN_M1_RIGHT, LOW);
-      analogWrite(PIN_M1_SPEED, 0);
+      full_stop(true, false);
       return(0);
     }
   }
@@ -251,29 +246,23 @@ int set_m1_speed(int target_speed) {
       digitalWrite(PIN_M1_RIGHT, HIGH);
     }
     else {
-      digitalWrite(PIN_M1_LEFT, LOW);
-      digitalWrite(PIN_M1_RIGHT, LOW);
-      analogWrite(PIN_M1_SPEED, 0);
+      full_stop(true, false);
       return(0);
     }
   }
   else {
-    digitalWrite(PIN_M1_LEFT, LOW);
-    digitalWrite(PIN_M1_RIGHT, LOW);
-    analogWrite(PIN_M1_SPEED, 255);
+    full_stop(true, false);
     return(0);
   }
 
-  for (int speed = max(m1_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
-    analogWrite(PIN_M1_SPEED, speed);
-    //delay(1);
-  }
-  return (target_speed);
+  int speed_to_set = max(abs(target_speed), MIN_MOTOR_SPEED);
+  analogWrite(PIN_M1_SPEED, speed_to_set);
+  return (speed_to_set);
 }
 
 int set_m2_speed(int target_speed) {
   // accelerate and start rolling forward
-  // return current engine speed delta
+  // return current engine speed
 
   if (target_speed > 0) {
     if (m2_speed >= 0) {
@@ -281,9 +270,7 @@ int set_m2_speed(int target_speed) {
       digitalWrite(PIN_M2_RIGHT, LOW);
     }
     else {
-      digitalWrite(PIN_M2_LEFT, LOW);
-      digitalWrite(PIN_M2_RIGHT, LOW);
-      analogWrite(PIN_M2_SPEED, 0);
+      full_stop(false, true);
       return(0);
     }
   }
@@ -293,9 +280,7 @@ int set_m2_speed(int target_speed) {
       digitalWrite(PIN_M2_RIGHT, HIGH);
     }
     else {
-      digitalWrite(PIN_M2_LEFT, LOW);
-      digitalWrite(PIN_M2_RIGHT, LOW);
-      analogWrite(PIN_M2_SPEED, 0);
+      full_stop(false, true);
       return(0);
     }
   }
@@ -306,11 +291,9 @@ int set_m2_speed(int target_speed) {
     return(0);
   }
 
-  for (int speed = max(m2_speed, MIN_MOTOR_SPEED); speed <= target_speed; speed++) {
-    analogWrite(PIN_M2_SPEED, speed);
-    //delay(1);
-  }
-  return (target_speed);
+  int speed_to_set = max(abs(target_speed), MIN_MOTOR_SPEED);
+  analogWrite(PIN_M2_SPEED, speed_to_set);
+  return (speed_to_set);
 }
 
 
