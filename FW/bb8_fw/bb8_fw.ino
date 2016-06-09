@@ -62,7 +62,7 @@ int m2_speed = 0;
 unsigned int speedup_ticks = MAX_SPEEDUP_TICKS;
 unsigned int slowdown_ticks = MAX_SLOWDOWN_TICKS;
 
-char ctrls_received = NOOP;
+char last_ctrls_received = NOOP;
 
 //==================================
 // functions declarations
@@ -102,22 +102,16 @@ void loop() {
   }
 
   // this sounds like a good idea
-  // ALTERNATIVE, DO NOT LOOP THROUGH COMMAND PARSING IF CTRLS ARE NOT RECEIVED. JUST RESET ctrls_received value to NONO after some timeout
-
+  // ALTERNATIVE, DO NOT LOOP THROUGH COMMAND PARSING IF CTRLS ARE NOT RECEIVED. JUST RESET last_ctrls_received value to NONO after some timeout
 
   // receive ctrl via bt
-  //ctrls_received = NOOP;
   if (bt_serial.available())
-    ctrls_received = bt_serial.read();
+    last_ctrls_received = bt_serial.read();
   //else
-  //  ctrls_received = NOOP;
-  //ctrls_received = bt_serial.read();
-
-  // if (ctrls_received != NOOP)
-  //   Serial.write(ctrls_received);
-
+  //  last_ctrls_received = NOOP;
+  
   // some ifs here to read what to do from ctrl commands
-  switch (ctrls_received)  {
+  switch (last_ctrls_received)  {
   case SOUND:
     make_sound();
     break;
@@ -126,39 +120,28 @@ void loop() {
       full_stop();
       translation = 0;
     } else {
-      if (speedup_ticks == 0) {
-        translation = MAX_TRANSLATION;
-      }
+      translation = MAX_TRANSLATION;
     }
     break;
   case BACKWARD:
-    slowdown_ticks = MAX_SLOWDOWN_TICKS;
     if (translation > 0) {
       full_stop();
       translation = 0;
-      speedup_ticks = MAX_SPEEDUP_TICKS;
     } else {
-      if (speedup_ticks == 0) {
-        speedup_ticks = MAX_SPEEDUP_TICKS;
-        if (abs(translation) < MAX_TRANSLATION) {
-          translation -= ACC_STEP;
-        }
-      } else {
-        speedup_ticks -= 1;
-      }
+      translation = -MAX_TRANSLATION;
     }
     break;
   case LEFT:
-    if (rotation <= 0 && abs(rotation) < MAX_ROTATION) {
-      rotation -= ROT_STEP;
-    } else if (rotation > 0) {
+    if (rotation <= 0) {
+      rotation = -MAX_ROTATION;
+    } else {
       rotation = 0;
     }
     break;
   case RIGHT:
-    if (rotation >= 0 && rotation < MAX_ROTATION) {
-      rotation += ROT_STEP;
-    } else if (rotation < 0) {
+    if (rotation >= 0) {
+      rotation = MAX_ROTATION;
+    } else {
       rotation = 0;
     }
     break;
@@ -168,20 +151,9 @@ void loop() {
     full_stop();
     break;
   case NOOP:
-    if (slowdown_ticks == 0) {
-      slowdown_ticks = MAX_SLOWDOWN_TICKS;
-      if (translation > 0) {
-        translation -= SLOW_STEP;
-      } else if (translation < 0) {
-        translation += SLOW_STEP;
-      }
-    } else {
-      slowdown_ticks -= 1;
-    }
-    if (rotation > 0)
-      rotation -= ROT_STEP;
-    else if (rotation < 0)
-      rotation += ROT_STEP;
+    translation = 0;
+    rotation = 0;
+    full_stop();
     break;
   default:
     break;
