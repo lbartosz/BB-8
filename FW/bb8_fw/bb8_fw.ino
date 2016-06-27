@@ -30,8 +30,8 @@
 #define PIN_PIEZO 11    // D12 PB3 MOSI
 
 #define WAIT 10
-#define MIN_MOTOR_SPEED 110
-#define MAX_MOTOR_SPEED 120
+#define MIN_MOTOR_SPEED 80
+#define MAX_MOTOR_SPEED 81
 #define ACC_STEP 1    //this will be added to translation once accelerating
 #define SLOW_STEP 1  //this will be added to translation once slowing down
 #define MAX_TRANSLATION 10 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
@@ -110,10 +110,14 @@ void loop() {
   //else
   //  last_ctrls_received = NOOP;
   
+  
+
+
   // some ifs here to read what to do from ctrl commands
   switch (last_ctrls_received)  {
   case SOUND:
     make_sound();
+    last_ctrls_received = NOOP;
     break;
   case FORWARD:
     if (translation < 0) {
@@ -169,11 +173,7 @@ void loop() {
   //Serial.print(" |Rot: "); Serial.print(rotation);
   //Serial.print(" |M1: "); Serial.print(m1_speed);
   //Serial.print(" |M2: "); Serial.print(m2_speed);
-  //Serial.print(" |Speedup_ticks: "); Serial.print(speedup_ticks);
-  //Serial.print(" |Slowdown_ticks: "); Serial.print(slowdown_ticks);
   //Serial.print("\n");
-  
-  delay(WAIT);
 }
 
 //==================================
@@ -194,7 +194,7 @@ void update_actuators(int translation, int rotation) {
 
   m1_target_speed += rotation;
   m2_target_speed -= rotation;
-
+  
   m1_speed = set_m1_speed(m1_target_speed);
   m2_speed = set_m2_speed(m2_target_speed);
 }
@@ -228,9 +228,8 @@ int set_m1_speed(int target_speed) {
     return(0);
   }
 
-  int speed_to_set = max(abs(target_speed), MIN_MOTOR_SPEED);
-  analogWrite(PIN_M1_SPEED, speed_to_set);
-  return (speed_to_set);
+  analogWrite(PIN_M1_SPEED, abs(target_speed));
+  return (target_speed);
 }
 
 int set_m2_speed(int target_speed) {
@@ -264,9 +263,8 @@ int set_m2_speed(int target_speed) {
     return(0);
   }
 
-  int speed_to_set = max(abs(target_speed), MIN_MOTOR_SPEED);
-  analogWrite(PIN_M2_SPEED, speed_to_set);
-  return (speed_to_set);
+  analogWrite(PIN_M2_SPEED, abs(target_speed));
+  return (target_speed);
 }
 
 
@@ -295,52 +293,4 @@ void make_sound(void) {
     delayMicroseconds(1000);
   }
   digitalWrite(PIN_PIEZO, LOW);
-}
-
-void test_actuators(void) {
-
-//piezo test
-  /*
-  for (int i = 500; i >= 0; i--) {
-    digitalWrite(PIN_PIEZO, LOW);
-    delayMicroseconds(1000);
-    digitalWrite(PIN_PIEZO, HIGH);
-    delayMicroseconds(1000);
-  }
-  digitalWrite(PIN_PIEZO, LOW);
-  delay(WAIT);
-  
-  
-  //serwo test
-  servo_head_x.write(0);
-  delay(WAIT);
-  servo_head_x.write(180);
-  delay(WAIT);
-
-  servo_head_y.write(0);
-  delay(WAIT);
-  servo_head_y.write(180);
-  delay(WAIT);
-  
-  */
-  //motor test
-  digitalWrite(PIN_M1_LEFT, HIGH);
-  digitalWrite(PIN_M1_RIGHT, LOW);
-  for (int speed = 150; speed <= 255; speed++) {
-    analogWrite(PIN_M1_SPEED, speed);
-    delay(10);
-  }
-  digitalWrite(PIN_M2_LEFT, HIGH);
-  digitalWrite(PIN_M2_RIGHT, LOW);
-  for (int speed2 = 150; speed2 <= 255; speed2++) {
-    analogWrite(PIN_M2_SPEED, speed2);
-    delay(10);
-  }
-  //delay(3000);
-  //for (int speed = 255; speed <= 150; speed--) {
-  //  analogWrite(PIN_M1_SPEED, speed);
-  //  delay(10);
-  //}
-  //analogWrite(PIN_M1_SPEED, 0);
-  delay(WAIT);
 }
