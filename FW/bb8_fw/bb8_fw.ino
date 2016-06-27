@@ -30,11 +30,11 @@
 #define PIN_PIEZO 11    // D12 PB3 MOSI
 
 #define WAIT 10
-#define MIN_MOTOR_SPEED 100
+#define MIN_MOTOR_SPEED 110
 #define MAX_MOTOR_SPEED 120
 #define ACC_STEP 1    //this will be added to translation once accelerating
-#define SLOW_STEP 10  //this will be added to translation once slowing down
-#define MAX_TRANSLATION 50 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
+#define SLOW_STEP 1  //this will be added to translation once slowing down
+#define MAX_TRANSLATION 10 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 #define MAX_ROTATION 5    //this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 1    // this will be added to rotation once turn control is pressed
 #define MAX_SPEEDUP_TICKS 3  // this is reset value to ticks
@@ -146,14 +146,15 @@ void loop() {
     }
     break;
   case STOP:
+    last_ctrls_received = NOOP;
     translation = 0;
     rotation = 0;
     full_stop();
     break;
   case NOOP:
-    translation = 0;
-    rotation = 0;
-    full_stop();
+    // translation = 0;
+    // rotation = 0;
+    // full_stop();
     break;
   default:
     break;
