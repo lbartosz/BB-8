@@ -4,7 +4,7 @@
  Author:  Lukasz Bartosz
 */
 
-#include <servo.h>
+#include <Servo.h>
 #include <SoftwareSerial.h>
 
 //==================================
@@ -34,7 +34,7 @@
 #define MAX_MOTOR_SPEED 81
 #define ACC_STEP 1    //this will be added to translation once accelerating
 #define SLOW_STEP 1  //this will be added to translation once slowing down
-#define MAX_TRANSLATION 10 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
+#define MAX_TRANSLATION 1 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 #define MAX_ROTATION 5    //this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 1    // this will be added to rotation once turn control is pressed
 #define MAX_SPEEDUP_TICKS 3  // this is reset value to ticks
@@ -87,7 +87,7 @@ void setup() {
   
   pinMode(PIN_PIEZO, OUTPUT);
   
-  //Serial.begin(9600);
+  Serial.begin(9600);
   bt_serial.begin(9600);
 
 }
@@ -105,12 +105,10 @@ void loop() {
   // ALTERNATIVE, DO NOT LOOP THROUGH COMMAND PARSING IF CTRLS ARE NOT RECEIVED. JUST RESET last_ctrls_received value to NONO after some timeout
 
   // receive ctrl via bt
-  if (bt_serial.available())
+  if (bt_serial.available()) {
     last_ctrls_received = bt_serial.read();
-  //else
-  //  last_ctrls_received = NOOP;
-  
-  
+    Serial.print(last_ctrls_received);
+  }
 
 
   // some ifs here to read what to do from ctrl commands
@@ -120,6 +118,7 @@ void loop() {
     last_ctrls_received = NOOP;
     break;
   case FORWARD:
+    rotation = 0;
     if (translation < 0) {
       full_stop();
       translation = 0;
@@ -128,6 +127,7 @@ void loop() {
     }
     break;
   case BACKWARD:
+    rotation = 0;
     if (translation > 0) {
       full_stop();
       translation = 0;
@@ -136,6 +136,7 @@ void loop() {
     }
     break;
   case LEFT:
+    translation = 0;
     if (rotation <= 0) {
       rotation = -MAX_ROTATION;
     } else {
@@ -143,6 +144,7 @@ void loop() {
     }
     break;
   case RIGHT:
+    translation = 0;
     if (rotation >= 0) {
       rotation = MAX_ROTATION;
     } else {
@@ -166,7 +168,7 @@ void loop() {
 
 
   // update actuators
-  update_actuators(translation, rotation);
+  //update_actuators(translation, rotation);
   
   
   //Serial.print(" |Trans: "); Serial.print(translation);
@@ -178,6 +180,10 @@ void loop() {
 
 //==================================
 // function definitions
+
+void test_actuators(void) {
+  make_sound();
+}
 
 void update_actuators(int translation, int rotation) {
   int m1_target_speed = 0;
@@ -192,8 +198,10 @@ void update_actuators(int translation, int rotation) {
     m2_target_speed = translation - MIN_MOTOR_SPEED;
   }
 
-  m1_target_speed += rotation;
-  m2_target_speed -= rotation;
+  if (abs(rotation) > 0) {
+    m1_target_speed = max(MIN_MOTOR_SPEED, m1_target_speed) + rotation;
+    m2_target_speed = max(MIN_MOTOR_SPEED, m1_target_speed) - rotation;
+  }
   
   m1_speed = set_m1_speed(m1_target_speed);
   m2_speed = set_m2_speed(m2_target_speed);
