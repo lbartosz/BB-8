@@ -11,6 +11,25 @@
 // enable/disable test mode here
 #define TEST_ENABLED 0
 
+//==================================
+// enable debug uart logging
+#define DEBUG
+
+//==================================
+// define debug macros
+#ifdef DEBUG
+  #define DEBUG_PRINT(x) Serial.print(x)
+  #define DEBUG_PRINTDEC(x) Serial.print(x, DEC)
+  #define DEBUG_PRINTLN(x) Serial.println(x)
+  #define DEBUG_MSG_INTERVAL 500
+  unsigned long last_debug_msg = 0;
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTDEC(x)
+  #define DEBUG_PRINTLN(x)
+#endif // DEBUG
+
+
 // =================================
 // pin assignments here and other constants
 #define SERVO_MIN 1000
@@ -29,16 +48,15 @@
 
 #define PIN_PIEZO 11    // D12 PB3 MOSI
 
-#define WAIT 10
+#define PIN_BTSERIAL_RX 16
+#define PIN_BTSERIAL_TX 17
+
 #define MIN_MOTOR_SPEED 80
 #define MAX_MOTOR_SPEED 81
-#define ACC_STEP 1    //this will be added to translation once accelerating
-#define SLOW_STEP 1  //this will be added to translation once slowing down
 #define MAX_TRANSLATION 1 //this has to be MAX_MOTOR_SPEED minus MIN_MOTOR_SPEED
 #define MAX_ROTATION 5    //this is max value that can be added/substracted from translation when turning
 #define ROT_STEP 1    // this will be added to rotation once turn control is pressed
-#define MAX_SPEEDUP_TICKS 3  // this is reset value to ticks
-#define MAX_SLOWDOWN_TICKS 10 // this is reset value to ticks
+#define CTRL_RELEASE_DELAY 200
  
 #define LEFT 'L'
 #define RIGHT 'R'
@@ -53,16 +71,16 @@
 Servo servo_head_x;
 Servo servo_head_y;
 
-SoftwareSerial bt_serial(0, 1);
+SoftwareSerial bt_serial(PIN_BTSERIAL_RX, PIN_BTSERIAL_TX);
 
 int translation = 0;
 int rotation = 0;
 int m1_speed = 0;
 int m2_speed = 0;
-unsigned int speedup_ticks = MAX_SPEEDUP_TICKS;
-unsigned int slowdown_ticks = MAX_SLOWDOWN_TICKS;
 
 char last_ctrls_received = NOOP;
+unsigned long last_ctrl_time = 0;
+
 
 //==================================
 // functions declarations
@@ -87,8 +105,13 @@ void setup() {
   
   pinMode(PIN_PIEZO, OUTPUT);
   
-  Serial.begin(9600);
-  bt_serial.begin(9600);
+  Serial.begin(115200);
+  bt_serial.begin(115200);
+
+#ifdef DEBUG
+  last_debug_msg = millis();
+#endif // DEBUG
+
 
 }
 
@@ -101,21 +124,22 @@ void loop() {
     test_actuators();
   }
 
-  // this sounds like a good idea
-  // ALTERNATIVE, DO NOT LOOP THROUGH COMMAND PARSING IF CTRLS ARE NOT RECEIVED. JUST RESET last_ctrls_received value to NONO after some timeout
-
   // receive ctrl via bt
   if (bt_serial.available()) {
+    last_ctrl_time = millis();
     last_ctrls_received = bt_serial.read();
-    Serial.print(last_ctrls_received);
+  } else {
+    if (millis() - last_ctrl_time > CTRL_RELEASE_DELAY) {
+      last_ctrl_time = millis();
+      last_ctrls_received = NOOP;
+    }
   }
-
-
-  // some ifs here to read what to do from ctrl commands
+  
+  // some ifs here to read what to do from ctrl command
   switch (last_ctrls_received)  {
   case SOUND:
-    make_sound();
     last_ctrls_received = NOOP;
+    make_sound();
     break;
   case FORWARD:
     rotation = 0;
@@ -158,24 +182,30 @@ void loop() {
     full_stop();
     break;
   case NOOP:
-    // translation = 0;
-    // rotation = 0;
-    // full_stop();
+    translation = 0;
+    rotation = 0;
+    full_stop();
     break;
   default:
     break;
   }
 
 
+#ifdef DEBUG
+  if (millis() - last_debug_msg > DEBUG_MSG_INTERVAL) {
+    last_debug_msg = millis();
+    DEBUG_PRINT(" |BT_COMM: ");  DEBUG_PRINT(last_ctrls_received);
+    DEBUG_PRINT(" |T: "); DEBUG_PRINT(translation);
+    DEBUG_PRINT(" |R: "); DEBUG_PRINT(rotation);
+    DEBUG_PRINT(" |M1: "); DEBUG_PRINT(m1_speed);
+    DEBUG_PRINT(" |M2: "); DEBUG_PRINTLN(m2_speed);
+  }
+#endif // DEBUG
+
   // update actuators
-  //update_actuators(translation, rotation);
-  
-  
-  //Serial.print(" |Trans: "); Serial.print(translation);
-  //Serial.print(" |Rot: "); Serial.print(rotation);
-  //Serial.print(" |M1: "); Serial.print(m1_speed);
-  //Serial.print(" |M2: "); Serial.print(m2_speed);
-  //Serial.print("\n");
+  update_actuators(translation, rotation);
+
+
 }
 
 //==================================
@@ -241,7 +271,7 @@ int set_m1_speed(int target_speed) {
 }
 
 int set_m2_speed(int target_speed) {
-  // accelerate and start rolling forward
+  // set motor speed to given in argument
   // return current engine speed
 
   if (target_speed > 0) {
@@ -289,8 +319,6 @@ void full_stop(bool stop_m1, bool stop_m2) {
     analogWrite(PIN_M2_SPEED, 0);
     m2_speed = 0;
   }
-  // wait for bb8 to stop swaying
-  delay(200);
 }
 
 void make_sound(void) {

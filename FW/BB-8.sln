@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bb8_fw", "bb8_fw\bb8_fw.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scratch", "scratch\scratch.vcxproj", "{963FA250-29E8-4FA1-A097-2C44866589F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HC_05", "HC_05\HC_05.vcxproj", "{2EF642D9-EB3F-4C9D-80F8-E14F154F668E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -21,6 +23,10 @@ Global
 		{963FA250-29E8-4FA1-A097-2C44866589F8}.Debug|x86.Build.0 = Debug|Win32
 		{963FA250-29E8-4FA1-A097-2C44866589F8}.Release|x86.ActiveCfg = Release|Win32
 		{963FA250-29E8-4FA1-A097-2C44866589F8}.Release|x86.Build.0 = Release|Win32
+		{2EF642D9-EB3F-4C9D-80F8-E14F154F668E}.Debug|x86.ActiveCfg = Debug|Win32
+		{2EF642D9-EB3F-4C9D-80F8-E14F154F668E}.Debug|x86.Build.0 = Debug|Win32
+		{2EF642D9-EB3F-4C9D-80F8-E14F154F668E}.Release|x86.ActiveCfg = Release|Win32
+		{2EF642D9-EB3F-4C9D-80F8-E14F154F668E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
